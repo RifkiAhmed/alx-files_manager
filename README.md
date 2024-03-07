@@ -10,6 +10,6 @@
 > - ExpressJS
 > - Kue
 
-### AUTHOR
-- 
-- 
+### AUTHORS
+- [badrxd](https://github.com/badrxd)
+- [RifkiAhmed](https://github.com/RifkiAhmed)
