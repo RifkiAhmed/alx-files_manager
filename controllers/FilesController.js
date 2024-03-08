@@ -60,13 +60,13 @@ class FilesController {
       const filePath = path.join(relativePath, fileName);
 
       // create folder in case if is not existe
-      await fs.mkdir(filePath, { recursive: true });
+      await fs.mkdir(relativePath, { recursive: true });
       const content = type === 'file'
         ? Buffer.from(data, 'base64').toString('utf-8')
         : Buffer.from(data, 'base64');
 
       // save file in local machine
-      await fs.writeFile(`${filePath}/${name}`, content);
+      await fs.writeFile(`${filePath}`, content);
 
       // save the data in the database
 
@@ -79,7 +79,7 @@ class FilesController {
         ...obj,
       });
     } catch (error) {
-      return res.status(500).send({ error: 'Internal server error' });
+      return res.status(500).send({ Error: error.message });
     }
   }
 
