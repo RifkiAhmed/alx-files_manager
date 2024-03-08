@@ -49,7 +49,7 @@ class FilesController {
         const folder = await mongodbClient.db.collection('files').insertOne({
           ...obj,
         });
-        return res.status(201).json({
+        return res.status(201).send({
           id: folder.insertedId,
           ...obj,
         });
@@ -74,7 +74,7 @@ class FilesController {
         .collection('files')
         .insertOne({ ...obj, localPath: filePath });
 
-      return res.status(201).json({
+      return res.status(201).send({
         id: file.insertedId,
         ...obj,
       });
@@ -84,7 +84,7 @@ class FilesController {
   }
 
   static async getShow(req, res) {
-    const { id: idUser } = req.params;
+    const { id: fileId } = req.params;
     const userToken = req.header('x-token');
     const user = await redisClient.get(`auth_${userToken}`);
     if (!user) {
@@ -92,18 +92,23 @@ class FilesController {
     }
     const file = await mongodbClient.db
       .collection('files')
-      .findOne({ _id: ObjectId(idUser.toString()) });
+      .findOne({ _id: ObjectId(fileId.toString()) });
 
     if (!file || file.userId !== user) {
-      return res.status(404).send('Not found');
+      return res.status(404).send({ error: 'Not found' });
     }
 
     const {
       _id: id, userId, name, type, parentId, isPublic,
     } = file;
 
-    return res.status(200).json({
-      id, userId, name, type, isPublic, parentId,
+    return res.status(200).send({
+      id,
+      userId,
+      name,
+      type,
+      isPublic,
+      parentId,
     });
   }
 
@@ -115,8 +120,8 @@ class FilesController {
         return res.status(401).send({ error: 'Unauthorized' });
       }
       const { parentId, page } = await req.query;
-      const parentId_ = await parentId !== undefined ? parentId : null;
-      const skip = await page !== undefined ? Number(page) * 20 : 0;
+      const parentId_ = (await parentId) !== undefined ? parentId : null;
+      const skip = (await page) !== undefined ? Number(page) * 20 : 0;
 
       let pipline = [
         { $skip: skip },
@@ -135,12 +140,86 @@ class FilesController {
       ];
 
       if (parentId_ !== null) {
-        pipline = [{ $match: { parentId: parentId_ === '0' ? 0 : parentId_ } }, ...pipline];
+        pipline = [
+          { $match: { parentId: parentId_ === '0' ? 0 : parentId_ } },
+          ...pipline,
+        ];
       }
-      const files = await mongodbClient.db.collection('files').aggregate(pipline).toArray();
+      const files = await mongodbClient.db
+        .collection('files')
+        .aggregate(pipline)
+        .toArray();
       return res.status(200).send(files);
     } catch (error) {
-      return res.status(500).send(error.message);
+      return res.status(500).send('');
+    }
+  }
+
+  static async putPublish(req, res) {
+    try {
+      const userToken = await req.header('x-token');
+      const idUser = await redisClient.get(`auth_${userToken}`);
+      if (!idUser) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const { id: fileId } = await req.params;
+
+      const file = await mongodbClient.db
+        .collection('files')
+        .findOne({ _id: ObjectId(fileId.toString()) });
+
+      if (!file || file.userId !== idUser) {
+        return res.status(404).send({ error: 'Not found' });
+      }
+      const {
+        _id: id, userId, name, type, parentId,
+      } = file;
+
+      await mongodbClient.db
+        .collection('files')
+        .updateOne({ _id: ObjectId(fileId.toString()) },
+          { $set: { isPublic: true } });
+
+      return res.status(200).send({
+        id, userId, name, type, isPublic: true, parentId,
+      });
+    } catch (error) {
+      return res.status(500).send('');
+    }
+  }
+
+  static async putUnpublish(req, res) {
+    try {
+      const userToken = await req.header('x-token');
+      const idUser = await redisClient.get(`auth_${userToken}`);
+      if (!idUser) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const { id: fileId } = await req.params;
+
+      const file = await mongodbClient.db
+        .collection('files')
+        .findOne({ _id: ObjectId(fileId.toString()) });
+
+      if (!file || file.userId !== idUser) {
+        return res.status(404).send({ error: 'Not found' });
+      }
+      const {
+        _id: id, userId, name, type, parentId,
+      } = file;
+
+      await mongodbClient.db
+        .collection('files')
+        .updateOne({ _id: ObjectId(fileId.toString()) },
+          { $set: { isPublic: false } });
+
+      return res.status(200).send({
+        id, userId, name, type, isPublic: false, parentId,
+      });
+    } catch (error) {
+      return res.status(500).send('');
     }
   }
 }
