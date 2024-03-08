@@ -18,10 +18,10 @@ class UsersController {
       return res.status(400).send({ error: 'Already exist' });
     }
     const hashedPassword = sha1(password);
-    const id = await dbClient.db
+    const { insertedId } = await dbClient.db
       .collection('users')
       .insertOne({ email, password: hashedPassword });
-    return res.status(201).send({ id, email });
+    return res.status(201).send({ insertedId, email });
   }
 
   static async getMe(req, res) {

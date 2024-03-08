@@ -17,7 +17,7 @@ class DBClient {
       .connect()
       .then(() => {
         console.log('Connected successfully to server');
-        this.mdb = this.client.db(dataBase);
+        this.db = this.client.db(dataBase);
       })
       .catch((err) => {
         console.error('Error connecting to MongoDB:', err.message);
@@ -30,13 +30,13 @@ class DBClient {
   }
 
   async nbUsers() {
-    const users = await this.mdb.collection('users').countDocuments();
+    const users = await this.db.collection('users').countDocuments();
     console.log(users);
     return users;
   }
 
   async nbFiles() {
-    const files = await this.mdb.collection('files').countDocuments();
+    const files = await this.db.collection('files').countDocuments();
     console.log(files);
     return files;
   }

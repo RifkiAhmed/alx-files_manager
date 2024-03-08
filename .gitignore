@@ -1,2 +1,5 @@
 node_modules/
 test/
+*.json
+test.js
+*.prettierrc
