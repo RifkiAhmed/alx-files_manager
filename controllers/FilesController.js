@@ -3,6 +3,7 @@ import redisClient from '../utils/redis';
 import mongodbClient from '../utils/db';
 
 const fs = require('fs').promises;
+const mime = require('mime-types');
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 
@@ -15,7 +16,11 @@ class FilesController {
         return res.status(401).send({ error: 'Unauthorized' });
       }
       const {
-        name, type, parentId, data, isPublic,
+        name,
+        type,
+        parentId,
+        data,
+        isPublic,
       } = await req.body;
 
       if (!name) {
@@ -99,7 +104,12 @@ class FilesController {
     }
 
     const {
-      _id: id, userId, name, type, parentId, isPublic,
+      _id: id,
+      userId,
+      name,
+      type,
+      parentId,
+      isPublic,
     } = file;
 
     return res.status(200).send({
@@ -173,16 +183,27 @@ class FilesController {
         return res.status(404).send({ error: 'Not found' });
       }
       const {
-        _id: id, userId, name, type, parentId,
+        _id: id,
+        userId,
+        name,
+        type,
+        parentId,
       } = file;
 
       await mongodbClient.db
         .collection('files')
-        .updateOne({ _id: ObjectId(fileId.toString()) },
-          { $set: { isPublic: true } });
+        .updateOne(
+          { _id: ObjectId(fileId.toString()) },
+          { $set: { isPublic: true } },
+        );
 
       return res.status(200).send({
-        id, userId, name, type, isPublic: true, parentId,
+        id,
+        userId,
+        name,
+        type,
+        isPublic: true,
+        parentId,
       });
     } catch (error) {
       return res.status(500).send('');
@@ -207,19 +228,65 @@ class FilesController {
         return res.status(404).send({ error: 'Not found' });
       }
       const {
-        _id: id, userId, name, type, parentId,
+        _id: id,
+        userId,
+        name, type,
+        parentId,
       } = file;
 
       await mongodbClient.db
         .collection('files')
-        .updateOne({ _id: ObjectId(fileId.toString()) },
-          { $set: { isPublic: false } });
+        .updateOne(
+          { _id: ObjectId(fileId.toString()) },
+          { $set: { isPublic: false } },
+        );
 
       return res.status(200).send({
-        id, userId, name, type, isPublic: false, parentId,
+        id,
+        userId,
+        name,
+        type,
+        isPublic: false,
+        parentId,
       });
     } catch (error) {
       return res.status(500).send('');
+    }
+  }
+
+  static async getFile(req, res) {
+    try {
+      const fileId = req.params.id;
+      const userToken = req.header('X-token');
+      const userId = await redisClient.get(`auth_${userToken}`);
+
+      const file = await mongodbClient.db
+        .collection('files')
+        .findOne({ _id: ObjectId(fileId.toString()) });
+
+      if (!file) {
+        console.log(1);
+        return res.status(404).send({ error: 'Not found' });
+      }
+
+      if (
+        (!file.isPublic && !userId) || (!file.isPublic && file.userId !== userId)
+      ) {
+        console.log(11);
+        return res.status(404).send({ error: 'Not found' });
+      }
+
+      if (file.type === 'folder') {
+        return res.status(400).send({ error: "A folder doesn't have content" });
+      }
+
+      const mimeType = mime.lookup(file.name);
+      const fileContent = await fs.readFile(file.localPath, 'utf-8');
+      res.setHeader('Content-Type', mimeType);
+      return res.status(200).send(fileContent);
+    } catch (error) {
+      console.log(111);
+      return res.status(404).send({ error: 'Not found' });
     }
   }
 }
