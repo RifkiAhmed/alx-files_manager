@@ -39,15 +39,19 @@ class FilesController {
         }
       }
       const obj = {
-        userId, name, type, isPublic: isPublic || false, parentId: parentId || 0,
+        userId,
+        name,
+        type,
+        isPublic: isPublic || false,
+        parentId: parentId || 0,
       };
       if (type === 'folder') {
-        const folder = await mongodbClient.db
-          .collection('files').insertOne({
-            ...obj,
-          });
+        const folder = await mongodbClient.db.collection('files').insertOne({
+          ...obj,
+        });
         return res.status(201).json({
-          id: folder.insertedId, ...obj,
+          id: folder.insertedId,
+          ...obj,
         });
       }
       const relativePath = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -57,9 +61,9 @@ class FilesController {
 
       // create folder in case if is not existe
       await fs.mkdir(filePath, { recursive: true });
-      const content = type === 'file' ? Buffer.from(data, 'base64').toString(
-        'utf-8',
-      ) : Buffer.from(data, 'base64');
+      const content = type === 'file'
+        ? Buffer.from(data, 'base64').toString('utf-8')
+        : Buffer.from(data, 'base64');
 
       // save file in local machine
       await fs.writeFile(`${filePath}/${name}`, content);
@@ -67,13 +71,76 @@ class FilesController {
       // save the data in the database
 
       const file = await mongodbClient.db
-        .collection('files').insertOne({ ...obj, localPath: filePath });
+        .collection('files')
+        .insertOne({ ...obj, localPath: filePath });
 
       return res.status(201).json({
-        id: file.insertedId, ...obj,
+        id: file.insertedId,
+        ...obj,
       });
     } catch (error) {
       return res.status(500).send({ error: 'Internal server error' });
+    }
+  }
+
+  static async getShow(req, res) {
+    const { id: idUser } = req.params;
+    const userToken = req.header('x-token');
+    const user = await redisClient.get(`auth_${userToken}`);
+    if (!user) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    }
+    const file = await mongodbClient.db
+      .collection('files')
+      .findOne({ _id: ObjectId(idUser.toString()) });
+
+    if (!file || file.userId !== user) {
+      return res.status(404).send('Not found');
+    }
+
+    const {
+      _id: id, userId, name, type, parentId, isPublic,
+    } = file;
+
+    return res.status(200).json({
+      id, userId, name, type, isPublic, parentId,
+    });
+  }
+
+  static async getIndex(req, res) {
+    try {
+      const userToken = req.header('x-token');
+      const userId = await redisClient.get(`auth_${userToken}`);
+      if (!userId) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+      const { parentId, page } = await req.query;
+      const parentId_ = await parentId !== undefined ? parentId : null;
+      const skip = await page !== undefined ? Number(page) * 20 : 0;
+
+      let pipline = [
+        { $skip: skip },
+        { $limit: 20 },
+        {
+          $project: {
+            id: '$_id',
+            userId: '$userId',
+            name: '$name',
+            type: '$type',
+            isPublic: '$isPublic',
+            parentId: '$parentId',
+            _id: 0,
+          },
+        },
+      ];
+
+      if (parentId_ !== null) {
+        pipline = [{ $match: { parentId: parentId_ === '0' ? 0 : parentId_ } }, ...pipline];
+      }
+      const files = await mongodbClient.db.collection('files').aggregate(pipline).toArray();
+      return res.status(200).send(files);
+    } catch (error) {
+      return res.status(500).send(error.message);
     }
   }
 }
