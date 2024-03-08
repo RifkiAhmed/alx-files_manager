@@ -21,7 +21,7 @@ class UsersController {
     const { insertedId } = await dbClient.db
       .collection('users')
       .insertOne({ email, password: hashedPassword });
-    return res.status(201).send({ insertedId, email });
+    return res.status(201).send({ id: insertedId, email });
   }
 
   static async getMe(req, res) {
