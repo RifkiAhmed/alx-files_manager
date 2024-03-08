@@ -265,14 +265,12 @@ class FilesController {
         .findOne({ _id: ObjectId(fileId.toString()) });
 
       if (!file) {
-        console.log(1);
         return res.status(404).send({ error: 'Not found' });
       }
 
       if (
         (!file.isPublic && !userId) || (!file.isPublic && file.userId !== userId)
       ) {
-        console.log(11);
         return res.status(404).send({ error: 'Not found' });
       }
 
@@ -285,7 +283,6 @@ class FilesController {
       res.setHeader('Content-Type', mimeType);
       return res.status(200).send(fileContent);
     } catch (error) {
-      console.log(111);
       return res.status(404).send({ error: 'Not found' });
     }
   }
