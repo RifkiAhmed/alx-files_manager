@@ -1,4 +1,5 @@
 import path from 'path';
+import { ObjectID } from 'mongodb';
 import redisClient from '../utils/redis';
 import mongodbClient from '../utils/db';
 import fileQueue from '../worker';
@@ -6,7 +7,7 @@ import fileQueue from '../worker';
 const fs = require('fs').promises;
 const mime = require('mime-types');
 const { v4: uuidv4 } = require('uuid');
-const { ObjectId } = require('mongodb');
+// const { ObjectID } = require('mongodb');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -36,7 +37,7 @@ class FilesController {
       if (parentId) {
         const file = await mongodbClient.db
           .collection('files')
-          .findOne({ _id: ObjectId(parentId.toString()) });
+          .findOne({ _id: ObjectID(parentId.toString()) });
         if (!file) {
           return res.status(400).send({ error: 'Parent not found' });
         }
@@ -112,7 +113,7 @@ class FilesController {
     }
     const file = await mongodbClient.db
       .collection('files')
-      .findOne({ _id: ObjectId(fileId.toString()) });
+      .findOne({ _id: ObjectID(fileId.toString()) });
 
     if (!file || file.userId !== user) {
       return res.status(404).send({ error: 'Not found' });
@@ -145,10 +146,11 @@ class FilesController {
         return res.status(401).send({ error: 'Unauthorized' });
       }
       const { parentId, page } = await req.query;
-      const parentId_ = (await parentId) !== undefined ? parentId : null;
-      const skip = (await page) !== undefined ? Number(page) * 20 : 0;
+      const parentId_ = parentId !== undefined ? parentId : null;
+      const skip = page !== undefined ? Number(page) * 20 : 0;
 
-      let pipline = [
+      const pipline = [
+        { $match: { parentId: parentId_ === '0' ? 0 : ObjectID(parentId) }, userId: ObjectID(userId) },
         { $skip: skip },
         { $limit: 20 },
         {
@@ -165,10 +167,7 @@ class FilesController {
       ];
 
       if (parentId_ !== null) {
-        pipline = [
-          { $match: { parentId: parentId_ === '0' ? 0 : parentId_ } },
-          ...pipline,
-        ];
+        pipline[0].$match.parentId = parentId_ === '0' ? 0 : parentId_;
       }
       const files = await mongodbClient.db
         .collection('files')
@@ -190,7 +189,7 @@ class FilesController {
       }
       const userInDb = await mongodbClient.db
         .collection('users')
-        .findOne({ _id: ObjectId(idUser.toString()) });
+        .findOne({ _id: ObjectID(idUser.toString()) });
 
       if (!userInDb) {
         return res.status(401).send({ error: 'Unauthorized' });
@@ -200,7 +199,7 @@ class FilesController {
 
       const file = await mongodbClient.db
         .collection('files')
-        .findOne({ _id: ObjectId(fileId.toString()) });
+        .findOne({ _id: ObjectID(fileId.toString()) });
 
       if (!file || file.userId !== idUser) {
         return res.status(404).send({ error: 'Not found' });
@@ -216,7 +215,7 @@ class FilesController {
       await mongodbClient.db
         .collection('files')
         .updateOne(
-          { _id: ObjectId(fileId.toString()) },
+          { _id: ObjectID(fileId.toString()) },
           { $set: { isPublic: true } },
         );
 
@@ -245,7 +244,7 @@ class FilesController {
 
       const file = await mongodbClient.db
         .collection('files')
-        .findOne({ _id: ObjectId(fileId.toString()) });
+        .findOne({ _id: ObjectID(fileId.toString()) });
 
       if (!file || file.userId !== idUser) {
         return res.status(404).send({ error: 'Not found' });
@@ -260,7 +259,7 @@ class FilesController {
       await mongodbClient.db
         .collection('files')
         .updateOne(
-          { _id: ObjectId(fileId.toString()) },
+          { _id: ObjectID(fileId.toString()) },
           { $set: { isPublic: false } },
         );
 
@@ -286,7 +285,7 @@ class FilesController {
 
       const file = await mongodbClient.db
         .collection('files')
-        .findOne({ _id: ObjectId(fileId.toString()) });
+        .findOne({ _id: ObjectID(fileId.toString()) });
 
       if (!file) {
         return res.status(404).send({ error: 'Not found' });
