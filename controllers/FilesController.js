@@ -105,37 +105,41 @@ class FilesController {
   }
 
   static async getShow(req, res) {
-    const { id: fileId } = req.params;
-    const userToken = req.header('x-token');
-    const user = await redisClient.get(`auth_${userToken}`);
-    if (!user) {
-      return res.status(401).send({ error: 'Unauthorized' });
+    try {
+      const userToken = req.header('x-token');
+      const user = await redisClient.get(`auth_${userToken}`);
+      if (!user) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+      const fileId = req.params.id;
+      const file = await mongodbClient.db
+        .collection('files')
+        .findOne({ _id: ObjectID(fileId.toString()) });
+
+      if (!file || file.userId !== user) {
+        return res.status(404).send({ error: 'Not found' });
+      }
+
+      const {
+        _id: id,
+        userId,
+        name,
+        type,
+        parentId,
+        isPublic,
+      } = file;
+
+      return res.status(200).send({
+        id,
+        userId,
+        name,
+        type,
+        isPublic,
+        parentId,
+      });
+    } catch (error) {
+      return res.status(500).send({ error: 'Internal server error' });
     }
-    const file = await mongodbClient.db
-      .collection('files')
-      .findOne({ _id: ObjectID(fileId.toString()) });
-
-    if (!file || file.userId !== user) {
-      return res.status(404).send({ error: 'Not found' });
-    }
-
-    const {
-      _id: id,
-      userId,
-      name,
-      type,
-      parentId,
-      isPublic,
-    } = file;
-
-    return res.status(200).send({
-      id,
-      userId,
-      name,
-      type,
-      isPublic,
-      parentId,
-    });
   }
 
   static async getIndex(req, res) {
@@ -148,7 +152,6 @@ class FilesController {
       const { parentId, page } = await req.query;
       const parentId_ = parentId !== undefined ? parentId : null;
       const skip = page !== undefined ? Number(page) * 20 : 0;
-
       const pipline = [
         { $match: { userId: ObjectID(userId) } },
         { $skip: skip },
@@ -169,13 +172,15 @@ class FilesController {
       if (parentId_ !== null) {
         pipline[0].$match.parentId = parentId_ === '0' ? 0 : ObjectID(parentId);
       }
+
       const files = await mongodbClient.db
         .collection('files')
         .aggregate(pipline)
         .toArray();
+
       return res.status(200).send(files);
     } catch (error) {
-      return res.status(500).send('');
+      return res.status(500).send({ error: 'Internal server error' });
     }
   }
 
@@ -183,7 +188,6 @@ class FilesController {
     try {
       const userToken = await req.header('x-token');
       const idUser = await redisClient.get(`auth_${userToken}`);
-      console.log(idUser);
       if (!idUser) {
         return res.status(401).send({ error: 'Unauthorized' });
       }
@@ -315,5 +319,4 @@ class FilesController {
     }
   }
 }
-
-module.exports = FilesController;
+export default FilesController;
