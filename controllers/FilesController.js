@@ -199,38 +199,53 @@ class FilesController {
         return res.status(401).send({ error: 'Unauthorized' });
       }
 
-      const { id: fileId } = await req.params;
+      const fileId = await req.params.id;
 
-      const file = await mongodbClient.db
-        .collection('files')
-        .findOne({ _id: ObjectID(fileId) });
+      // const file = await mongodbClient.db
+      //   .collection('files')
+      //   .findOne({ _id: ObjectID(fileId) });
 
-      if (!file || file.userId !== idUser) {
-        return res.status(404).send({ error: 'Not found' });
-      }
-      const {
-        _id: id,
-        userId,
-        name,
-        type,
-        parentId,
-      } = file;
+      // if (!file || file.userId !== idUser) {
+      //   return res.status(404).send({ error: 'Not found' });
+      // }
 
-      await mongodbClient.db
-        .collection('files')
-        .updateOne(
-          { _id: ObjectID(fileId) },
-          { $set: { isPublic: true } },
+      const newValue = { $set: { isPublic: true } };
+      const options = { returnOriginal: 'after' };
+      const updatedFile = await mongodbClient.db
+        .collection('files').findOneAndUpdate(
+          { _id: ObjectID(fileId), userId: userInDb.id },
+          newValue,
+          options,
         );
+      console.log(updatedFile);
+      if (!updatedFile.value) {
+        return res.status(404).json({ error: 'File not found' });
+      }
 
-      return res.status(200).send({
-        id,
-        userId,
-        name,
-        type,
-        isPublic: true,
-        parentId,
-      });
+      // const {
+      //   _id,
+      //   userId,
+      //   name,
+      //   type,
+      //   parentId,
+      // } = file;
+
+      // await mongodbClient.db
+      //   .collection('files')
+      //   .updateOne(
+      //     { _id: ObjectID(fileId) },
+      //     { $set: { isPublic: true } },
+      //   );
+
+      // return res.status(200).send({
+      //   id: _id,
+      //   userId,
+      //   name,
+      //   type,
+      //   isPublic: true,
+      //   parentId,
+      // });
+      return res.status(200).json(updatedFile.value);
     } catch (error) {
       return res.status(404).send({ error: 'Not found' });
     }
