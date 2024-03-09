@@ -188,6 +188,13 @@ class FilesController {
       if (!idUser) {
         return res.status(401).send({ error: 'Unauthorized' });
       }
+      const userInDb = await mongodbClient.db
+        .collection('users')
+        .findOne({ _id: ObjectId(idUser.toString()) });
+
+      if (!userInDb) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
 
       const { id: fileId } = await req.params;
 
@@ -196,8 +203,7 @@ class FilesController {
         .findOne({ _id: ObjectId(fileId.toString()) });
 
       if (!file || file.userId !== idUser) {
-        return res.status(404).send('Not found');
-        // return res.status(404).send({ error: 'Not found' });
+        return res.status(404).send({ error: 'Not found' });
       }
       const {
         _id: id,
