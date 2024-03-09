@@ -113,6 +113,7 @@ class FilesController {
     const file = await mongodbClient.db
       .collection('files')
       .findOne({ _id: ObjectId(fileId.toString()) });
+
     if (!file || file.userId !== user) {
       return res.status(404).send({ error: 'Not found' });
     }
@@ -195,7 +196,8 @@ class FilesController {
         .findOne({ _id: ObjectId(fileId.toString()) });
 
       if (!file || file.userId !== idUser) {
-        return res.status(404).send({ error: 'Not found' });
+        return res.status(404).send('Not found');
+        // return res.status(404).send({ error: 'Not found' });
       }
       const {
         _id: id,
@@ -212,7 +214,7 @@ class FilesController {
           { $set: { isPublic: true } },
         );
 
-      return res.status(200).json({
+      return res.status(200).send({
         id,
         userId,
         name,
@@ -245,8 +247,7 @@ class FilesController {
       const {
         _id: id,
         userId,
-        name,
-        type,
+        name, type,
         parentId,
       } = file;
 
@@ -257,7 +258,7 @@ class FilesController {
           { $set: { isPublic: false } },
         );
 
-      return res.status(200).json({
+      return res.status(200).send({
         id,
         userId,
         name,
