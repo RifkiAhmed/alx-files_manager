@@ -1,6 +1,7 @@
 import path from 'path';
 import redisClient from '../utils/redis';
 import mongodbClient from '../utils/db';
+import fileQueue from '../worker';
 
 const fs = require('fs').promises;
 const mime = require('mime-types');
@@ -78,6 +79,20 @@ class FilesController {
       const file = await mongodbClient.db
         .collection('files')
         .insertOne({ ...obj, localPath: filePath });
+
+      if (obj.type === 'image') {
+        fileQueue.add({
+          fileId: file.insertedId,
+          userId,
+        });
+
+        // fileQueue.on('failed', (failedJob, err) => {
+        //   if (failedJob.id === job.id) {
+        //     return res.status(500).send({ error: err.message });
+        //   }
+        //   return null;
+        // });
+      }
 
       return res.status(201).send({
         id: file.insertedId,
@@ -256,7 +271,8 @@ class FilesController {
 
   static async getFile(req, res) {
     try {
-      const fileId = req.params.id;
+      const fileId = await req.params.id;
+      const { size } = await req.query;
       const userToken = req.header('X-token');
       const userId = await redisClient.get(`auth_${userToken}`);
 
@@ -277,12 +293,17 @@ class FilesController {
       if (file.type === 'folder') {
         return res.status(400).send({ error: "A folder doesn't have content" });
       }
-
+      const localPath = size !== undefined ? `${file.localPath}_${size}` : file.localPath;
       const mimeType = mime.lookup(file.name);
-      const fileContent = await fs.readFile(file.localPath, 'utf-8');
+      // const fileContent = await fs.readFile(localPath, 'utf-8');
+      const fileContent = file.type === 'file'
+        ? await fs.readFile(localPath, 'utf-8')
+        : await fs.readFile(localPath);
+
       res.setHeader('Content-Type', mimeType);
       return res.status(200).send(fileContent);
     } catch (error) {
+      console.log(111);
       return res.status(404).send({ error: 'Not found' });
     }
   }
