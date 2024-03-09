@@ -193,7 +193,7 @@ class FilesController {
       }
       const userInDb = await mongodbClient.db
         .collection('users')
-        .findOne({ _id: ObjectID(idUser.toString()) });
+        .findOne({ _id: ObjectID(idUser) });
 
       if (!userInDb) {
         return res.status(401).send({ error: 'Unauthorized' });
@@ -203,7 +203,7 @@ class FilesController {
 
       const file = await mongodbClient.db
         .collection('files')
-        .findOne({ _id: ObjectID(fileId.toString()) });
+        .findOne({ _id: ObjectID(fileId) });
 
       if (!file || file.userId !== idUser) {
         return res.status(404).send({ error: 'Not found' });
@@ -219,7 +219,7 @@ class FilesController {
       await mongodbClient.db
         .collection('files')
         .updateOne(
-          { _id: ObjectID(fileId.toString()) },
+          { _id: ObjectID(fileId) },
           { $set: { isPublic: true } },
         );
 
