@@ -107,13 +107,14 @@ class FilesController {
     const { id: fileId } = req.params;
     const userToken = req.header('x-token');
     const user = await redisClient.get(`auth_${userToken}`);
+    console.log(user);
     if (!user) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
     const file = await mongodbClient.db
       .collection('files')
       .findOne({ _id: ObjectId(fileId.toString()) });
-
+    console.log(file);
     if (!file || file.userId !== user) {
       return res.status(404).send({ error: 'Not found' });
     }
@@ -184,6 +185,7 @@ class FilesController {
     try {
       const userToken = await req.header('x-token');
       const idUser = await redisClient.get(`auth_${userToken}`);
+      console.log(idUser);
       if (!idUser) {
         return res.status(401).send({ error: 'Unauthorized' });
       }
@@ -221,7 +223,7 @@ class FilesController {
         parentId,
       });
     } catch (error) {
-      return res.status(500).send('');
+      return res.status(404).send({ error: 'Not found' });
     }
   }
 
@@ -265,7 +267,7 @@ class FilesController {
         parentId,
       });
     } catch (error) {
-      return res.status(500).send('');
+      return res.status(404).send({ error: 'Not found' });
     }
   }
 
