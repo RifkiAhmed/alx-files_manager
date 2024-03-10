@@ -1,5 +1,5 @@
 // const mongodbClient = require('./utils/db');
-import { ObjectId } from 'mongodb';
+import { ObjectID } from 'mongodb';
 import imageThumbnail from 'image-thumbnail';
 import Queue from 'bull';
 import mongodbClient from './utils/db';
@@ -7,22 +7,23 @@ import mongodbClient from './utils/db';
 const fs = require('fs');
 
 const fileQueue = new Queue('image transcoding');
+const userQueue = new Queue('welcome user');
 
 fileQueue.process(async (job, done) => {
   try {
     const { fileId, userId } = await job.data;
     if (!fileId) {
-      done(new Error('Missing fileId'));
+      throw new Error('Missing fileId');
     }
     if (!userId) {
-      done(new Error('Missing userId'));
+      throw new Error('Missing userId');
     }
     const file = await mongodbClient.db
       .collection('files')
-      .findOne({ _id: ObjectId(fileId.toString()) });
+      .findOne({ _id: ObjectID(fileId.toString()) });
 
     if (!file || file.userId !== userId) {
-      done(new Error('File not found'));
+      throw new Error('File not found');
     }
     const imageBuffer = fs.readFileSync(file.localPath);
 
@@ -37,7 +38,23 @@ fileQueue.process(async (job, done) => {
     /* eslint-enable no-await-in-loop */
     done();
   } catch (error) {
-    done(new Error('File not found'));
+    throw new Error('File not found');
+  }
+});
+
+userQueue.process(async (job) => {
+  const { userId } = job.data;
+
+  if (!userId) {
+    throw new Error('Missing userId');
+  }
+  const users = mongodbClient.db.collection('users');
+  const user = await users.findOne({ _id: new ObjectID(userId) });
+
+  if (user) {
+    console.log(`Welcome ${user.email}!`);
+  } else {
+    throw new Error('User not found');
   }
 });
 export default fileQueue;

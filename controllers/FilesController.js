@@ -1,13 +1,13 @@
 import path from 'path';
 import { ObjectID } from 'mongodb';
+import Queue from 'bull';
+import mime from 'mime-types';
+import { v4 as uuidv4 } from 'uuid';
+import { promises as fs } from 'fs';
 import redisClient from '../utils/redis';
 import mongodbClient from '../utils/db';
-import fileQueue from '../worker';
 
-const fs = require('fs').promises;
-const mime = require('mime-types');
-const { v4: uuidv4 } = require('uuid');
-// const { ObjectID } = require('mongodb');
+const fileQueue = new Queue('image transcoding');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -86,13 +86,6 @@ class FilesController {
           fileId: file.insertedId,
           userId,
         });
-
-        // fileQueue.on('failed', (failedJob, err) => {
-        //   if (failedJob.id === job.id) {
-        //     return res.status(500).send({ error: err.message });
-        //   }
-        //   return null;
-        // });
       }
 
       return res.status(201).send({
