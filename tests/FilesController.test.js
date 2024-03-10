@@ -8,7 +8,7 @@ describe('filesController APIs', () => {
   let folderId;
   let fileId;
 
-  it('post request for the users page using valid email and password', (done) => {
+  it('send post request for the users page using valid email and password', (done) => {
     request.post('http://localhost:5000/users', { json: { email, password } },
       (error, response) => {
         expect(response.statusCode).to.equal(201);
@@ -145,7 +145,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the get index file page using valid user token', (done) => {
+  it('send get request for the get index file page using valid user token', (done) => {
     request.get('http://localhost:5000/files', {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -155,7 +155,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the get index file page using valid user token', (done) => {
+  it('send get request for the get index file page using valid user token', (done) => {
     request.get(`http://localhost:5000/files/${fileId}`, {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -165,7 +165,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the get show file page using valid user token and wrong file id', (done) => {
+  it('send get request for the get show file page using valid user token and wrong file id', (done) => {
     request.get('http://localhost:5000/files/65ee00b8137ebda3ee93ab00', {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -175,7 +175,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the get show file file page using valid file id; missing user token', (done) => {
+  it('send get request for the get show file file page using valid file id; missing user token', (done) => {
     request.get(`http://localhost:5000/files/${fileId}`, {
       headers: { 'x-token': '' },
     }, (error, response, body) => {
@@ -185,7 +185,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the get show file file page using valid user token and valid file id', (done) => {
+  it('send put request for the get show file file page using valid user token and valid file id', (done) => {
     request.put(`http://localhost:5000/files/${fileId}/publish`, {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -195,7 +195,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the publish file page using valid file id; invalid user token', (done) => {
+  it('send put request for the publish file page using valid file id; invalid user token', (done) => {
     request.put(`http://localhost:5000/files/${fileId}/publish`, {
       headers: { 'x-token': '' },
     }, (error, response, body) => {
@@ -205,7 +205,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the publish file page using valid user token; invalid file id', (done) => {
+  it('send put request for the publish file page using valid user token; invalid file id', (done) => {
     request.put('http://localhost:5000/files/65ee00b8137ebda3ee93ab00/publish', {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -216,7 +216,7 @@ describe('filesController APIs', () => {
   });
 
 
-  it('send post request for the unpublish file page using valid user token and file id', (done) => {
+  it('send put request for the unpublish file page using valid user token and file id', (done) => {
     request.put(`http://localhost:5000/files/${fileId}/unpublish`, {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -226,7 +226,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the unpublish file page using valid file id; invalid user token', (done) => {
+  it('send put request for the unpublish file page using valid file id; invalid user token', (done) => {
     request.put(`http://localhost:5000/files/${fileId}/unpublish`, {
       headers: { 'x-token': '' },
     }, (error, response, body) => {
@@ -236,7 +236,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the unpublish file page using valid user token; invalid file id', (done) => {
+  it('send put request for the unpublish file page using valid user token; invalid file id', (done) => {
     request.put('http://localhost:5000/files/65ee00b8137ebda3ee93ab00/unpublish', {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -246,7 +246,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the data file page using valid user token and folder id', (done) => {
+  it('send get request for the data file page using valid user token and folder id', (done) => {
     request.get(`http://localhost:5000/files/${folderId}/data`, {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -256,7 +256,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the data file page using valid user token; invalid file id', (done) => {
+  it('send get request for the data file page using valid user token; invalid file id', (done) => {
     request.get('http://localhost:5000/files/65ee00b8137ebda3ee93ab00/data', {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
@@ -266,7 +266,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the data file page using valid file id and invalid user token', (done) => {
+  it('send get request for the data file page using valid file id and invalid user token', (done) => {
     request.get(`http://localhost:5000/files/${fileId}/data`, {
       headers: { 'x-token': '' },
     }, (error, response, body) => {
@@ -276,7 +276,7 @@ describe('filesController APIs', () => {
     });
   });
 
-  it('send post request for the data file page using valid user token and file id', (done) => {
+  it('send get request for the data file page using valid user token and file id', (done) => {
     request.get(`http://localhost:5000/files/${fileId}/data`, {
       headers: { 'x-token': userToken },
     }, (error, response, body) => {
