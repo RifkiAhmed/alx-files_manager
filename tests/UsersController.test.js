@@ -61,7 +61,7 @@ describe('usersController APIs', () => {
   });
 
   it('request for the /users/me page with invalid user token', (done) => {
-    request.get('http://localhost:5000/users/me', { headers: { 'x-token': 'a4631b89-201e-4dd4-ac43-8a9a254d797e' } },
+    request.get('http://localhost:5000/users/me', { headers: { 'x-token': '' } },
       (error, response, body) => {
         expect(response.statusCode).to.equal(401);
         expect(JSON.parse(body)).to.deep.equal({ error: 'Unauthorized' });
