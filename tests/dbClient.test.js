@@ -6,6 +6,7 @@ const { expect } = require('chai');
 
 describe('dbClient', () => {
   let userId;
+
   it('dbClient constructor', async () => {
     const consoleSpy = sinon.spy(console, 'log');
     setTimeout(() => expect(consoleSpy.calledWithMatch('Connected successfully to server')).to.be.true, 10000);
