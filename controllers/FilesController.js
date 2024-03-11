@@ -50,7 +50,7 @@ class FilesController {
         name,
         type,
         isPublic: isPublic || false,
-        parentId: parentId || 0,
+        parentId: parentId || '0',
       };
       if (type === 'folder') {
         const folder = await mongodbClient.db.collection('files').insertOne({
@@ -163,7 +163,8 @@ class FilesController {
       ];
 
       if (parentId_ !== null) {
-        pipline[0].$match.parentId = parentId_ === '0' ? 0 : ObjectID(parentId);
+        pipline[0].$match.parentId = parentId_;
+        // pipline[0].$match.parentId = parentId_ === '0' ? 0 : ObjectID(parentId);
       }
 
       const files = await mongodbClient.db
