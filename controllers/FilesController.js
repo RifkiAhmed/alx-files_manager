@@ -163,7 +163,7 @@ class FilesController {
       ];
 
       if (parentId_ !== null) {
-        pipline[0].$match.parentId = parentId_;
+        pipline[0].$match.parentId = parentId_ === '0' ? '0' : ObjectID(parentId);
         // pipline[0].$match.parentId = parentId_ === '0' ? 0 : ObjectID(parentId);
       }
 
