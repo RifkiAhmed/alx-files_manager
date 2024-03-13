@@ -100,36 +100,18 @@ class FilesController {
   static async getShow(req, res) {
     try {
       const userToken = req.header('x-token');
-      const user = await redisClient.get(`auth_${userToken}`);
-      if (!user) {
+      const newUserId = await redisClient.get(`auth_${userToken}`);
+      if (!newUserId) {
         return res.status(401).send({ error: 'Unauthorized' });
       }
       const fileId = req.params.id;
       const file = await mongodbClient.db
         .collection('files')
         .findOne({ _id: ObjectID(fileId.toString()) });
-
-      if (!file || file.userId !== user) {
+      if (!file || file.userId.toString() !== newUserId) {
         return res.status(404).send({ error: 'Not found' });
       }
-
-      const {
-        _id: id,
-        userId,
-        name,
-        type,
-        parentId,
-        isPublic,
-      } = file;
-
-      return res.status(200).send({
-        id,
-        userId,
-        name,
-        type,
-        isPublic,
-        parentId,
-      });
+      return res.status(200).send(file);
     } catch (error) {
       return res.status(404).send({ error: 'Not found' });
     }
