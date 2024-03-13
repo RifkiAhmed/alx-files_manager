@@ -131,7 +131,7 @@ class FilesController {
         parentId,
       });
     } catch (error) {
-      return res.status(401).send({ error: 'Unauthorized' });
+      return res.status(404).send({ error: 'Not found' });
     }
   }
 
