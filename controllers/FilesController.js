@@ -207,6 +207,7 @@ class FilesController {
         name,
         type,
         parentId,
+        localPath,
       } = file;
 
       await mongodbClient.db
@@ -223,6 +224,7 @@ class FilesController {
         type,
         isPublic: true,
         parentId,
+        localPath,
       });
     } catch (error) {
       return res.status(404).send({ error: 'Not found' });
