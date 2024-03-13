@@ -180,7 +180,7 @@ class FilesController {
         .collection('files')
         .findOne({ _id: ObjectID(fileId.toString()) });
 
-      if (!file || file.userId !== idUser) {
+      if (!file || file.userId.toString() !== idUser) {
         return res.status(404).send({ error: 'Not found' });
       }
       const {
@@ -227,7 +227,7 @@ class FilesController {
         .collection('files')
         .findOne({ _id: ObjectID(fileId.toString()) });
 
-      if (!file || file.userId !== idUser) {
+      if (!file || file.userId.toString() !== idUser) {
         return res.status(404).send({ error: 'Not found' });
       }
       const {
