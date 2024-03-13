@@ -273,7 +273,7 @@ class FilesController {
       }
 
       if (
-        (!file.isPublic && !userId) || (!file.isPublic && file.userId !== userId)
+        (!file.isPublic && !userId) || (!file.isPublic && file.userId.toString() !== userId)
       ) {
         return res.status(404).send({ error: 'Not found' });
       }
